@@ -34,9 +34,9 @@
   function readComposerText(element) {
     if (!element) return "";
     if (element instanceof HTMLTextAreaElement || element instanceof HTMLInputElement) {
-      return element.value.trim();
+      return element.value;
     }
-    return (element.innerText || element.textContent || "").trim();
+    return element.innerText || element.textContent || "";
   }
 
   function findComposer() {
@@ -50,6 +50,24 @@
 
   function extractLovableProjectId() {
     return window.location.pathname.match(/\/projects\/([A-Za-z0-9-]+)/i)?.[1] || "";
+  }
+
+  function detectedProjectContext(projectId) {
+    const root = document.documentElement;
+    const supabaseProjectRef = root?.dataset?.lovaburstSupabaseProject === projectId
+      ? root.dataset.lovaburstSupabaseRef || ""
+      : "";
+    let previewHost = "";
+    for (const frame of document.querySelectorAll("iframe[src]")) {
+      try {
+        const host = new URL(frame.src, window.location.href).hostname;
+        if (host.endsWith(".lovable.app")) {
+          previewHost = host;
+          break;
+        }
+      } catch {}
+    }
+    return { supabaseProjectRef, previewHost };
   }
 
   function normalizeRepository(value) {
@@ -226,6 +244,7 @@
 
   async function resolveWorkspace() {
     const lovableProjectId = extractLovableProjectId();
+    const projectContext = detectedProjectContext(lovableProjectId);
     const apiDiagnostics = readApiDiagnostics();
     const diagnosticsRepository = resolveRepositoryFromDiagnostics(apiDiagnostics);
     const domRepository = diagnosticsRepository || detectGithubRepository();
@@ -253,6 +272,7 @@
             ? "lovable-gitsync"
             : response?.source || localSource,
         apiDiagnostics,
+        ...projectContext,
       };
     } catch {
       return {
@@ -260,6 +280,7 @@
         repository: domRepository,
         detectionSource: localSource,
         apiDiagnostics,
+        ...projectContext,
       };
     }
   }
@@ -380,7 +401,7 @@
 
   async function capturePrompt(button) {
     const text = readComposerText(composer);
-    if (!text) {
+    if (!text.trim()) {
       button.textContent = "Enter a prompt first";
       button.disabled = true;
       window.setTimeout(() => resetButton(button), 1400);
@@ -408,6 +429,8 @@
           repository: workspace.repository,
           lovableProjectId: workspace.lovableProjectId,
           repositoryDetectionSource: workspace.detectionSource,
+          supabaseProjectRef: workspace.supabaseProjectRef,
+          previewHost: workspace.previewHost,
           apiDiagnostics: workspace.apiDiagnostics,
         },
       });
@@ -528,12 +551,12 @@
     }
 
     if (message?.type === "LOVABURST_SUBMIT_OBJECTIVE") {
-      const objective = String(message.objective || "").trim();
+      const objective = String(message.objective || "");
       const skills = Array.isArray(message.skills)
         ? message.skills.filter((skill) => typeof skill === "string" && /^[a-z0-9-]{2,40}$/i.test(skill)).slice(0, 42)
         : [];
 
-      if (!objective) {
+      if (!objective.trim()) {
         sendResponse({ ok: false, error: "Enter what you want to change." });
         return false;
       }
@@ -556,6 +579,8 @@
               repository: workspace.repository,
               lovableProjectId: workspace.lovableProjectId,
               repositoryDetectionSource: workspace.detectionSource,
+              supabaseProjectRef: workspace.supabaseProjectRef,
+              previewHost: workspace.previewHost,
               apiDiagnostics: workspace.apiDiagnostics,
               skills,
             },

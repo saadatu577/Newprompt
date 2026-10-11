@@ -5,7 +5,7 @@
   if (!core) return;
 
   const UI_ID = "lovaburst-composer-ui";
-  const TOAST_LOGO_URL = chrome.runtime.getURL("assets/logo.png");
+  const TOAST_LOGO_URL = chrome.runtime.getURL("logo.png");
   const OLD_BUTTON_ID = "lovaburst-capture-button";
   let uiHost = null, shadow = null, controls = null, toast = null, frame = null, observer = null, scanTimer = null;
   let busy = false, enhancing = false, lastPointerSubmitAt = 0, lastPath = location.pathname;

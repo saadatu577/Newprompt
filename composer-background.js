@@ -3,8 +3,8 @@ import { withSkillInstructions } from "../shared/skill-instructions.js";
 
 const PROJECT_SKILLS_KEY = "projectSkillSelections";
 const PROJECT_CHATS_KEY = "projectChatBindings";
-const CHATGPT_ENHANCE_BRIDGE = "src/content/chatgpt-enhance.js";
-const CHATGPT_SUBMIT_BRIDGE = "src/content/chatgpt.js";
+const CHATGPT_ENHANCE_BRIDGE = "chatgpt-enhance.js";
+const CHATGPT_SUBMIT_BRIDGE = "chatgpt.js";
 const ENHANCE_TIMEOUT_MS = 95000;
 
 const SKILL_IDS = new Set([
@@ -121,7 +121,7 @@ async function refreshChatGptResult(projectId) {
   } catch {
     await chrome.scripting.executeScript({
       target: { tabId: tab.id },
-      files: ["src/content/chatgpt-result-refresh.js"],
+      files: ["chatgpt-result-refresh.js"],
     });
     return chrome.tabs.sendMessage(tab.id, {
       type: "LOVABURST_SCAN_RESULT_MARKERS",
@@ -131,9 +131,9 @@ async function refreshChatGptResult(projectId) {
 }
 
 async function forwardComposerObjective(message, sender) {
-  const objective = String(message.objective || "").trim();
+  const objective = String(message.objective || "");
   const projectId = String(message.projectId || "").trim();
-  if (!objective) throw new Error("Enter what you want to change.");
+  if (!objective.trim()) throw new Error("Enter what you want to change.");
   if (!projectId) throw new Error("Could not identify the platform project.");
   if (!sender?.tab?.id) throw new Error("The platform tab is unavailable.");
 

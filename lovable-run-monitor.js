@@ -9,7 +9,7 @@
   const DEFAULT_REFRESH_SECONDS = 30;
   const ALLOWED_REFRESH_SECONDS = new Set([5, 10, 15, 30, 60, 120]);
   const VIEWPORT_MARGIN = 12;
-  const TOAST_LOGO_URL = chrome.runtime.getURL("assets/logo.png");
+  const TOAST_LOGO_URL = chrome.runtime.getURL("logo.png");
   let shadow = null, toast = null, monitor = null;
   let stopped = false;
   let observer = null;

@@ -1,5 +1,5 @@
 const PROJECT_CHATS_KEY = "projectChatBindings";
-const RESULT_BRIDGE = "src/content/chatgpt-result-refresh.js";
+const RESULT_BRIDGE = "chatgpt-result-refresh.js";
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 async function activeProjectConversation(projectId) {
