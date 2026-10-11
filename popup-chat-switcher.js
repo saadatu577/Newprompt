@@ -33,7 +33,7 @@
       const ping = await chrome.tabs.sendMessage(tabId, { type: "LOVABURST_CONTENT_PING" });
       if (ping?.ok && ping.source === "chatgpt") return true;
     } catch {}
-    await chrome.scripting.executeScript({ target: { tabId }, files: ["chatgpt.js"] });
+    await chrome.scripting.executeScript({ target: { tabId }, files: ["src/content/chatgpt.js"] });
     const ping = await chrome.tabs.sendMessage(tabId, { type: "LOVABURST_CONTENT_PING" });
     return Boolean(ping?.ok && ping.source === "chatgpt");
   }

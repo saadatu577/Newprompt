@@ -21,13 +21,13 @@
       const link = document.createElement("link");
       link.id = "lovaburst-layout-v026";
       link.rel = "stylesheet";
-      link.href = chrome.runtime.getURL("popup-layout-v026.css");
+      link.href = chrome.runtime.getURL("src/popup/popup-layout-v026.css");
       document.head.appendChild(link);
     }
     if (!document.getElementById("lovaburst-progress-v026")) {
       const script = document.createElement("script");
       script.id = "lovaburst-progress-v026";
-      script.src = chrome.runtime.getURL("popup-progress.js");
+      script.src = chrome.runtime.getURL("src/popup/popup-progress.js");
       document.documentElement.appendChild(script);
     }
   }
@@ -154,7 +154,7 @@
     } catch {}
 
     try {
-      await chrome.scripting.executeScript({ target: { tabId }, files: ["lovable-integrations.js"] });
+      await chrome.scripting.executeScript({ target: { tabId }, files: ["src/content/lovable-integrations.js"] });
       return await chrome.tabs.sendMessage(tabId, message);
     } catch {
       return null;

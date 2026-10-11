@@ -1,9 +1,8 @@
-import { getConfig, setConfig } from "./storage.js";
-import { getPromptSkillIds } from "./skill-instructions.js";
-import { buildProjectRequestPrompt } from "./request-wrapper.js";
+import { getConfig, setConfig } from "../shared/storage.js";
+import { getPromptSkillIds, withSkillInstructions } from "../shared/skill-instructions.js";
 
 const CHATGPT_URL_PATTERNS = ["https://chatgpt.com/*"];
-const CHATGPT_BRIDGE_FILE = "chatgpt.js";
+const CHATGPT_BRIDGE_FILE = "src/content/chatgpt.js";
 
 async function configureSidePanel() {
   if (!chrome.sidePanel?.setPanelBehavior) return;
@@ -168,6 +167,14 @@ async function getChatGptStatus() {
     link,
     tabs,
   };
+}
+
+async function sendPromptMessage(tabId, prompt) {
+  return chrome.tabs.sendMessage(tabId, {
+    type: "LOVABURST_SUBMIT_TO_CHATGPT",
+    prompt,
+    implementationTask: true,
+  });
 }
 
 async function ensureChatGptBridge(tabId) {
@@ -369,7 +376,7 @@ async function relayPromptToChatGpt(payload, sourceTabId = null) {
 
   const preparedPrompt = await globalThis.LovaRPMLicense?.preparePrompt?.("main", payload);
   if (!preparedPrompt) throw new Error("The server did not prepare the operation.");
-  const prompt = await buildProjectRequestPrompt(payload);
+  const prompt = withSkillInstructions(preparedPrompt, payload.skills);
   let sourceTab = null;
   let activatedChatForDispatch = false;
 
@@ -390,11 +397,7 @@ async function relayPromptToChatGpt(payload, sourceTabId = null) {
     const bridgeReady = await ensureChatGptBridge(tab.id);
     if (!bridgeReady) throw new Error("The ChatGPT bridge did not respond after injection.");
 
-    const response = await chrome.tabs.sendMessage(tab.id, {
-      type: "LOVABURST_SUBMIT_TO_CHATGPT",
-      prompt,
-      preservePrompt: true,
-    });
+    const response = await sendPromptMessage(tab.id, prompt);
     if (!response?.ok) {
       throw new Error(response?.error || "ChatGPT did not confirm that the prompt was sent.");
     }
@@ -498,7 +501,7 @@ async function handleCapturedPrompt(message, sender) {
   const bootstrap = await accessBootstrapState(lovableProjectId);
 
   const pendingPrompt = {
-    text: payload.text,
+    text: payload.text.trim(),
     url: payload.url || "",
     title: payload.title || "",
     capturedAt: payload.capturedAt || new Date().toISOString(),

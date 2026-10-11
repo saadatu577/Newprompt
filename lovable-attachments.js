@@ -1,5 +1,5 @@
 (() => {
-  const LOGO_URL = chrome.runtime.getURL("logo.png");
+  const LOGO_URL = chrome.runtime.getURL("assets/logo.png");
   if(window.__LOVABURST_LOVABLE_ATTACHMENTS__)return;window.__LOVABURST_LOVABLE_ATTACHMENTS__=true;
   const core=globalThis.__LOVABURST_COMPOSER_CORE__,A=globalThis.__LOVABURST_ATTACHMENTS__;if(!core||!A)return;
   const items=[];let sending=false,host=null,shadow=null,picker=null,list=null,attach=null;

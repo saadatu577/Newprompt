@@ -1,4 +1,4 @@
-import { buildProjectRequestPrompt } from "./request-wrapper.js";
+import { withSkillInstructions } from "../shared/skill-instructions.js";
 
 const SKILL_IDS = new Set([
   "interface-premium",
@@ -95,7 +95,7 @@ async function ensureBridges(tabId) {
     const ping = await chrome.tabs.sendMessage(tabId, { type: "LOVABURST_CONTENT_PING" });
     if (!ping?.ok) throw new Error("bridge ausente");
   } catch {
-    await chrome.scripting.executeScript({ target: { tabId }, files: ["chatgpt.js"] });
+    await chrome.scripting.executeScript({ target: { tabId }, files: ["src/content/chatgpt.js"] });
   }
 
   try {
@@ -103,17 +103,17 @@ async function ensureBridges(tabId) {
     if (ping?.ok && ping.version === ATTACHMENT_BRIDGE_VERSION) return;
   } catch {}
 
-  await chrome.scripting.executeScript({ target: { tabId }, files: ["chatgpt-attachments.js"] });
+  await chrome.scripting.executeScript({ target: { tabId }, files: ["src/content/chatgpt-attachments.js"] });
   const ping = await chrome.tabs.sendMessage(tabId, { type: "LOVABURST_ATTACHMENTS_PING" });
   if (!ping?.ok || ping.version !== ATTACHMENT_BRIDGE_VERSION) throw new Error("The current LovaRPM attachment bridge did not respond in ChatGPT.");
 }
 
 async function submit(message, sender) {
-  const text = String(message.text || "");
+  const text = String(message.text || "").trim();
   const attachments = Array.isArray(message.attachments) ? message.attachments.slice(0, 5) : [];
   const projectId = String(message.projectId || "").trim();
 
-  if (!text.trim() && !attachments.length) throw new Error("Enter a message or add an attachment.");
+  if (!text && !attachments.length) throw new Error("Enter a message or add an attachment.");
   if (!projectId) throw new Error("Could not identify the platform project.");
 
   const stored = await chrome.storage.local.get(["workspaceBindings", "config"]);
@@ -136,12 +136,7 @@ async function submit(message, sender) {
 
   const preparedPrompt = await globalThis.LovaRPMLicense?.preparePrompt?.("main", payload);
   if (!preparedPrompt) throw new Error("The server did not prepare the attachment operation.");
-  const prompt = await buildProjectRequestPrompt({
-    ...payload,
-    branch: message.branch,
-    supabaseProjectRef: message.supabaseProjectRef,
-    previewHost: message.previewHost,
-  });
+  const prompt = withSkillInstructions(preparedPrompt, payload.skills);
   const tab = await chat(projectId);
   const source = sender?.tab?.id ? await chrome.tabs.get(sender.tab.id).catch(() => null) : null;
   const wasActive = Boolean(tab.active);
@@ -173,7 +168,7 @@ async function submit(message, sender) {
     const dispatched = await chrome.tabs.sendMessage(tab.id, {
       type: "LOVABURST_SUBMIT_TO_CHATGPT",
       prompt,
-      preservePrompt: true,
+      implementationTask: true,
     });
     if (!dispatched?.ok) {
       throw new Error(dispatched?.error || "ChatGPT did not confirm that the message was sent.");

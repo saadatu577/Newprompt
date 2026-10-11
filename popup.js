@@ -14,7 +14,7 @@ async function setConfig(nextConfig) {
 }
 
 const KEY = "projectChatBindings";
-const BRIDGE = "chatgpt.js";
+const BRIDGE = "src/content/chatgpt.js";
 const LAST_WORKSPACE_KEY = "lastLovableWorkspace";
 const LAST_WORKSPACES_KEY = "lastPlatformWorkspaces";
 const PLATFORM_KEY = "selectedBuilderPlatform";
